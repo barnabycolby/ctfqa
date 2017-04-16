@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from unittest.mock import Mock
+from unittest.mock import call, Mock
 import unittest
 
 from telnetlib import Telnet
@@ -38,9 +38,34 @@ class TestSolve(unittest.TestCase):
 
 
     def test_solve_succeeds(self):
-        self.ctfqa.setQuestionRegex("")
-        self.ctfqa.setAnswerCallback(lambda *args: None)
-        self.ctfqa.solve()
+        expected_flag = "flag{b34n5_4nd_s4us463s}"
+        self.telnet.read_until.side_effect = [
+                "What is 6 + 4?",
+                "What is 145 + 208?",
+                "What is 43717893 + 327890432?",
+                expected_flag,
+                EOFError()
+            ]
+
+        # The callback function that is used to generate the answer
+        def add(a, b):
+            return str(int(a) + int(b))
+
+        self.ctfqa.setQuestionRegex("What is (\d*) \+ (\d*)\?")
+        self.ctfqa.setAnswerCallback(add)
+        actual_flag = self.ctfqa.solve()
+
+        self.telnet.read_until.assert_has_calls([
+                call("\n"),
+                call("\n"),
+                call("\n")
+            ])
+        self.telnet.write.assert_has_calls([
+                call("10\n"),
+                call("353\n"),
+                call("371608325\n")
+            ])
+        self.assertEqual(expected_flag, actual_flag)
 
 
 if __name__ == '__main__':

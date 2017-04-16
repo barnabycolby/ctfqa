@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 from telnetlib import Telnet
+import re
 
 from ctfqa import NotConfiguredError
+
 
 """
 This class is designed to make the solving of question and answer style CTF
@@ -29,15 +31,23 @@ class CTFQA:
         """
         self.setQuestionRegexCalled = False
         self.setAnswerCallbackCalled = False
-        pass
+        self.questionRegex = None
+        self.answerCallback = None
+        self.telnet = telnet
 
 
     def setQuestionRegex(self, regex):
         """Set the regex used to identify the questions in the server responses.
+        The regex must be of the form described by the python re module,
+        grouping items that should be selected as arguments for the answer
+        callback. For example, if the question is "What is 4 + 6?" and the regex
+        is "What is (\d*) \+ (\d*)?", the answer callback will be called with 4
+        and 6.
 
         Arguments:
         regex -- The regex used to identify the questions.
         """
+        self.questionRegex = regex
         self.setQuestionRegexCalled = True
 
 
@@ -48,13 +58,15 @@ class CTFQA:
         Arguments:
         callback -- The callback function.
         """
+        self.answerCallback = callback
         self.setAnswerCallbackCalled = True
 
 
     def solve(self):
         """
         Solves the CTF challenge by communicating with the telnet server, using
-        the answer callback to generate responses.
+        the answer callback to generate responses. Any unrecognised responses
+        are returned.
 
         Throws:
         NotConfiguredError -- If the CTFQA object has not been fully configured,
@@ -65,3 +77,17 @@ class CTFQA:
 
         if not self.setAnswerCallbackCalled:
             raise NotConfiguredError("You need to call setAnswerCallback first.")
+
+        connectionOpen = True
+        while connectionOpen:
+            try:
+                question = self.telnet.read_until("\n")
+            except EOFError:
+                connectionOpen = False
+                continue
+
+            m = re.search(self.questionRegex, question)
+            if m is None:
+                return question
+            answer = self.answerCallback(*m.groups())
+            self.telnet.write("{}\n".format(answer))
