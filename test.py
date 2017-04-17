@@ -103,5 +103,34 @@ class TestSolve(unittest.TestCase):
         self.telnet.write.assert_called_once_with("24\n")
 
 
+    def test_solve_incorrect_answer_response(self):
+        expected_last_response = "WRONG"
+        self.telnet.read_until.side_effect = [
+                "Please add 4 and 9:",
+                "Please add 105 and 87:",
+                expected_last_response,
+                EOFError()
+            ]
+
+        # The callback function that is used to generate the answer
+        def add(a, b):
+            return str(int(a) + int(b))
+
+        self.ctfqa.setQuestionRegex("Please add (\d*) and (\d*):")
+        self.ctfqa.setAnswerCallback(add)
+        actual_last_response = self.ctfqa.solve()
+
+        self.telnet.read_until.assert_has_calls([
+                call("\n", timeout=30),
+                call("\n", timeout=30),
+                call("\n", timeout=30)
+            ])
+        self.telnet.write.assert_has_calls([
+                call("13\n"),
+                call("192\n")
+            ])
+        self.assertEqual(expected_last_response, actual_last_response)
+
+
 if __name__ == '__main__':
     unittest.main()
