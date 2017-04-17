@@ -81,5 +81,27 @@ class TestSolve(unittest.TestCase):
             self.ctfqa.solve()
 
 
+    def test_solve_connection_closed_halfway(self):
+        self.telnet.read_until.side_effect = [
+                "3 * 8",
+                EOFError()
+            ]
+
+        # The callback function that is used to generate the answer
+        def multiply(a, b):
+            return str(int(a) * int(b))
+
+        self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
+        self.ctfqa.setAnswerCallback(multiply)
+        with self.assertRaises(EOFError):
+            self.ctfqa.solve()
+
+        self.telnet.read_until.assert_has_calls([
+                call("\n"),
+                call("\n")
+            ])
+        self.telnet.write.assert_called_once_with("24\n")
+
+
 if __name__ == '__main__':
     unittest.main()
