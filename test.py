@@ -77,7 +77,8 @@ class TestSolve(unittest.TestCase):
 
         self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
         self.ctfqa.setAnswerCallback(multiply)
-        with self.assertRaises(EOFError):
+        exception_message = "There is no more output to read."
+        with self.assertRaisesRegex(ConnectionError, exception_message):
             self.ctfqa.solve()
 
 
@@ -93,7 +94,8 @@ class TestSolve(unittest.TestCase):
 
         self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
         self.ctfqa.setAnswerCallback(multiply)
-        with self.assertRaises(EOFError):
+        exception_message = "There is no more output to read."
+        with self.assertRaisesRegex(ConnectionError, exception_message):
             self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
