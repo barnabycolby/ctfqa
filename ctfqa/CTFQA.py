@@ -60,7 +60,13 @@ class CTFQA:
 
         Arguments:
         callback -- The callback function.
+
+        Throws:
+        TypeError -- If the provided callback is not callable.
         """
+        if not callable(callback):
+            raise TypeError("The argument you provided is not callable.")
+
         self.answerCallback = callback
         self.setAnswerCallbackCalled = True
 

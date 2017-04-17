@@ -33,6 +33,22 @@ class TestSetQuestionRegex(unittest.TestCase):
         self.ctfqa.setQuestionRegex("(\d*)")
 
 
+class TestSetAnswerCallback(unittest.TestCase):
+    def setUp(self):
+        self.telnet = Mock(spec=Telnet)
+        self.ctfqa = CTFQA(self.telnet)
+
+
+    def test_invalid_callback(self):
+        exception_message = "The argument you provided is not callable."
+        with self.assertRaisesRegex(TypeError, exception_message):
+            self.ctfqa.setAnswerCallback("Hmmmm")
+
+
+    def test_succeeds(self):
+        self.ctfqa.setAnswerCallback(lambda *args: "1")
+
+
 class TestSolve(unittest.TestCase):
     def setUp(self):
         self.telnet = Mock(spec=Telnet)
