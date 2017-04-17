@@ -71,6 +71,7 @@ class CTFQA:
         Throws:
         NotConfiguredError -- If the CTFQA object has not been fully configured,
                               see the exception message for details.
+        EOFError -- If the connection is closed by the server unexpectedly.
         """
         if not self.setQuestionRegexCalled:
             raise NotConfiguredError("You need to call setQuestionRegex first.")
@@ -81,18 +82,14 @@ class CTFQA:
         connectionOpen = True
         lastResponse = None
         while connectionOpen:
-            try:
-                question = self.telnet.read_until("\n")
-            except EOFError:
-                connectionOpen = False
+            question = self.telnet.read_until("\n")
 
-            if connectionOpen:
-                m = re.search(self.questionRegex, question)
-                if m is None:
-                    lastResponse = question
-                    connectionOpen = False
-                else:
-                    answer = self.answerCallback(*m.groups())
-                    self.telnet.write("{}\n".format(answer))
+            m = re.search(self.questionRegex, question)
+            if m is None:
+                lastResponse = question
+                connectionOpen = False
+            else:
+                answer = self.answerCallback(*m.groups())
+                self.telnet.write("{}\n".format(answer))
 
         return lastResponse

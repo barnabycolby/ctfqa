@@ -68,5 +68,18 @@ class TestSolve(unittest.TestCase):
         self.assertEqual(expected_flag, actual_flag)
 
 
+    def test_solve_connection_closed(self):
+        self.telnet.read_until.side_effect = EOFError()
+
+        # The callback function that is used to generate the answer
+        def multiply(a, b):
+            return str(int(a) * int(b))
+
+        self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
+        self.ctfqa.setAnswerCallback(multiply)
+        with self.assertRaises(EOFError):
+            self.ctfqa.solve()
+
+
 if __name__ == '__main__':
     unittest.main()
