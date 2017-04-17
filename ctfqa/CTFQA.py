@@ -93,6 +93,9 @@ class CTFQA:
                 connectionOpen = False
             else:
                 answer = self.answerCallback(*matches.groups())
-                self.telnet.write("{}\n".format(answer))
+                try:
+                    self.telnet.write("{}\n".format(answer))
+                except OSError:
+                    raise ConnectionError("Tried to write to a closed connection.")
 
         return lastResponse

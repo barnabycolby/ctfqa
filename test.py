@@ -134,5 +134,25 @@ class TestSolve(unittest.TestCase):
         self.assertEqual(expected_last_response, actual_last_response)
 
 
+    def test_solve_os_error(self):
+        self.telnet.read_until.side_effect = [
+                "'Concatenate' 'this string together'"
+            ]
+        self.telnet.write.side_effect = [
+                OSError()
+            ]
+
+        # The callback function that is used to generate the answer
+        def concatenate(a, b):
+            return "{} {}".format(a, b)
+
+        self.ctfqa.setQuestionRegex("'([^']*)' '([^']*)'")
+        self.ctfqa.setAnswerCallback(concatenate)
+
+        exception_message = "Tried to write to a closed connection."
+        with self.assertRaisesRegex(ConnectionError, exception_message):
+            self.ctfqa.solve()
+
+
 if __name__ == '__main__':
     unittest.main()
