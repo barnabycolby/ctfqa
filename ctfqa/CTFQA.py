@@ -79,15 +79,20 @@ class CTFQA:
             raise NotConfiguredError("You need to call setAnswerCallback first.")
 
         connectionOpen = True
+        lastResponse = None
         while connectionOpen:
             try:
                 question = self.telnet.read_until("\n")
             except EOFError:
                 connectionOpen = False
-                continue
 
-            m = re.search(self.questionRegex, question)
-            if m is None:
-                return question
-            answer = self.answerCallback(*m.groups())
-            self.telnet.write("{}\n".format(answer))
+            if connectionOpen:
+                m = re.search(self.questionRegex, question)
+                if m is None:
+                    lastResponse = question
+                    connectionOpen = False
+                else:
+                    answer = self.answerCallback(*m.groups())
+                    self.telnet.write("{}\n".format(answer))
+
+        return lastResponse
