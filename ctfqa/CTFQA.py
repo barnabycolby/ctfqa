@@ -84,12 +84,12 @@ class CTFQA:
         while connectionOpen:
             question = self.telnet.read_until("\n")
 
-            m = re.search(self.questionRegex, question)
-            if m is None:
+            matches = re.search(self.questionRegex, question)
+            if matches is None:
                 lastResponse = question
                 connectionOpen = False
             else:
-                answer = self.answerCallback(*m.groups())
+                answer = self.answerCallback(*matches.groups())
                 self.telnet.write("{}\n".format(answer))
 
         return lastResponse
