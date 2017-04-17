@@ -56,9 +56,9 @@ class TestSolve(unittest.TestCase):
         actual_flag = self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
-                call("\n"),
-                call("\n"),
-                call("\n")
+                call("\n", timeout=30),
+                call("\n", timeout=30),
+                call("\n", timeout=30)
             ])
         self.telnet.write.assert_has_calls([
                 call("10\n"),
@@ -97,8 +97,8 @@ class TestSolve(unittest.TestCase):
             self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
-                call("\n"),
-                call("\n")
+                call("\n", timeout=30),
+                call("\n", timeout=30)
             ])
         self.telnet.write.assert_called_once_with("24\n")
 

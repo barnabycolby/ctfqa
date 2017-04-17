@@ -82,7 +82,7 @@ class CTFQA:
         connectionOpen = True
         lastResponse = None
         while connectionOpen:
-            question = self.telnet.read_until("\n")
+            question = self.telnet.read_until("\n", timeout=30)
 
             matches = re.search(self.questionRegex, question)
             if matches is None:
