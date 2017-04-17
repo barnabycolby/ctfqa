@@ -3,6 +3,7 @@ from unittest.mock import call, Mock
 import unittest
 
 from telnetlib import Telnet
+import re
 import socket
 
 from ctfqa import CTFQA, NotConfiguredError
@@ -15,6 +16,21 @@ class TestConstructor(unittest.TestCase):
 
     def test_succeeds(self):
         ctfqa = CTFQA(self.telnet)
+
+
+class TestSetQuestionRegex(unittest.TestCase):
+    def setUp(self):
+        self.telnet = Mock(spec=Telnet)
+        self.ctfqa = CTFQA(self.telnet)
+
+
+    def test_invalid_regex(self):
+        with self.assertRaises(re.error):
+            self.ctfqa.setQuestionRegex("[")
+
+
+    def test_succeeds(self):
+        self.ctfqa.setQuestionRegex("(\d*)")
 
 
 class TestSolve(unittest.TestCase):

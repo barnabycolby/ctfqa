@@ -46,8 +46,11 @@ class CTFQA:
 
         Arguments:
         regex -- The regex used to identify the questions.
+
+        Throws:
+        re.error -- If the regex is invalid.
         """
-        self.questionRegex = regex
+        self.questionRegex = re.compile(regex)
         self.setQuestionRegexCalled = True
 
 
@@ -87,7 +90,7 @@ class CTFQA:
             except EOFError:
                 raise ConnectionError("There is no more output to read.")
 
-            matches = re.search(self.questionRegex, question)
+            matches = self.questionRegex.search(question)
             if matches is None:
                 lastResponse = question
                 connectionOpen = False
