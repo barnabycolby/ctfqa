@@ -92,9 +92,10 @@ class CTFQA:
         lastResponse = None
         while connectionOpen:
             try:
-                question = self.telnet.read_until("\n", timeout=30)
+                question_bytes = self.telnet.read_until(b"\n", timeout=30)
             except EOFError:
                 raise ConnectionError("There is no more output to read.")
+            question = str(question_bytes, "utf-8")
 
             matches = self.questionRegex.search(question)
             if matches is None:
@@ -103,7 +104,8 @@ class CTFQA:
             else:
                 answer = self.answerCallback(*matches.groups())
                 try:
-                    self.telnet.write("{}\n".format(answer))
+                    answer_with_newline = "{}\n".format(answer)
+                    self.telnet.write(answer_with_newline.encode())
                 except OSError:
                     raise ConnectionError("Tried to write to a closed connection.")
 

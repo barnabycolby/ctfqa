@@ -72,10 +72,10 @@ class TestSolve(unittest.TestCase):
     def test_solve_succeeds(self):
         expected_flag = "flag{b34n5_4nd_s4us463s}"
         self.telnet.read_until.side_effect = [
-                "What is 6 + 4?",
-                "What is 145 + 208?",
-                "What is 43717893 + 327890432?",
-                expected_flag,
+                b"What is 6 + 4?",
+                b"What is 145 + 208?",
+                b"What is 43717893 + 327890432?",
+                expected_flag.encode(),
                 EOFError()
             ]
 
@@ -88,14 +88,14 @@ class TestSolve(unittest.TestCase):
         actual_flag = self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
-                call("\n", timeout=30),
-                call("\n", timeout=30),
-                call("\n", timeout=30)
+                call(b"\n", timeout=30),
+                call(b"\n", timeout=30),
+                call(b"\n", timeout=30)
             ])
         self.telnet.write.assert_has_calls([
-                call("10\n"),
-                call("353\n"),
-                call("371608325\n")
+                call(b"10\n"),
+                call(b"353\n"),
+                call(b"371608325\n")
             ])
         self.assertEqual(expected_flag, actual_flag)
 
@@ -116,7 +116,7 @@ class TestSolve(unittest.TestCase):
 
     def test_solve_connection_closed_halfway(self):
         self.telnet.read_until.side_effect = [
-                "3 * 8",
+                b"3 * 8",
                 EOFError()
             ]
 
@@ -131,18 +131,18 @@ class TestSolve(unittest.TestCase):
             self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
-                call("\n", timeout=30),
-                call("\n", timeout=30)
+                call(b"\n", timeout=30),
+                call(b"\n", timeout=30)
             ])
-        self.telnet.write.assert_called_once_with("24\n")
+        self.telnet.write.assert_called_once_with(b"24\n")
 
 
     def test_solve_incorrect_answer_response(self):
         expected_last_response = "WRONG"
         self.telnet.read_until.side_effect = [
-                "Please add 4 and 9:",
-                "Please add 105 and 87:",
-                expected_last_response,
+                b"Please add 4 and 9:",
+                b"Please add 105 and 87:",
+                expected_last_response.encode(),
                 EOFError()
             ]
 
@@ -155,20 +155,20 @@ class TestSolve(unittest.TestCase):
         actual_last_response = self.ctfqa.solve()
 
         self.telnet.read_until.assert_has_calls([
-                call("\n", timeout=30),
-                call("\n", timeout=30),
-                call("\n", timeout=30)
+                call(b"\n", timeout=30),
+                call(b"\n", timeout=30),
+                call(b"\n", timeout=30)
             ])
         self.telnet.write.assert_has_calls([
-                call("13\n"),
-                call("192\n")
+                call(b"13\n"),
+                call(b"192\n")
             ])
         self.assertEqual(expected_last_response, actual_last_response)
 
 
     def test_solve_os_error(self):
         self.telnet.read_until.side_effect = [
-                "'Concatenate' 'this string together'"
+                b"'Concatenate' 'this string together'"
             ]
         self.telnet.write.side_effect = [
                 OSError()
