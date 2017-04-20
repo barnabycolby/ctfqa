@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from testfixtures import LogCapture
 from unittest.mock import call, Mock
 import unittest
 
@@ -7,6 +8,8 @@ import re
 import socket
 
 from ctfqa import CTFQA, NotConfiguredError
+
+MODULE_NAME = "ctfqa.CTFQA"
 
 
 class TestConstructor(unittest.TestCase):
@@ -30,7 +33,11 @@ class TestSetQuestionRegex(unittest.TestCase):
 
 
     def test_succeeds(self):
-        self.ctfqa.setQuestionRegex("(\d*)")
+        with LogCapture() as log_capture:
+            self.ctfqa.setQuestionRegex("(\d*)")
+            log_capture.check(
+                (MODULE_NAME, "INFO", "Set question regex to \"(\d*)\"")
+            )
 
 
 class TestSetAnswerCallback(unittest.TestCase):
@@ -46,7 +53,14 @@ class TestSetAnswerCallback(unittest.TestCase):
 
 
     def test_succeeds(self):
-        self.ctfqa.setAnswerCallback(lambda *args: "1")
+        def testFunction(firstArg):
+            return "1"
+
+        with LogCapture() as log_capture:
+            self.ctfqa.setAnswerCallback(testFunction)
+            log_capture.check(
+                (MODULE_NAME, "INFO", "Set answer callback to testFunction(firstArg)")
+            )
 
 
 class TestSolve(unittest.TestCase):
@@ -57,16 +71,24 @@ class TestSolve(unittest.TestCase):
 
     def test_question_regex_not_set(self):
         self.ctfqa.setAnswerCallback(lambda *args: None)
-        exception_message = "You need to call setQuestionRegex first\."
-        with self.assertRaisesRegex(NotConfiguredError, exception_message):
-            self.ctfqa.solve()
+        exception_message = "You need to call setQuestionRegex first."
+        with LogCapture() as log_capture:
+            with self.assertRaisesRegex(NotConfiguredError, exception_message):
+                self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "ERROR", exception_message)
+            )
 
 
     def test_answer_callback_not_set(self):
         self.ctfqa.setQuestionRegex("")
-        exception_message = "You need to call setAnswerCallback first\."
-        with self.assertRaisesRegex(NotConfiguredError, exception_message):
-            self.ctfqa.solve()
+        exception_message = "You need to call setAnswerCallback first."
+        with LogCapture() as log_capture:
+            with self.assertRaisesRegex(NotConfiguredError, exception_message):
+                self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "ERROR", exception_message)
+            )
 
 
     def test_solve_succeeds(self):
@@ -85,7 +107,18 @@ class TestSolve(unittest.TestCase):
 
         self.ctfqa.setQuestionRegex("What is (\d*) \+ (\d*)\?")
         self.ctfqa.setAnswerCallback(add)
-        actual_flag = self.ctfqa.solve()
+
+        with LogCapture() as log_capture:
+            actual_flag = self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "INFO", "Q: What is 6 + 4?"),
+                (MODULE_NAME, "INFO", "A: 10"),
+                (MODULE_NAME, "INFO", "Q: What is 145 + 208?"),
+                (MODULE_NAME, "INFO", "A: 353"),
+                (MODULE_NAME, "INFO", "Q: What is 43717893 + 327890432?"),
+                (MODULE_NAME, "INFO", "A: 371608325"),
+                (MODULE_NAME, "INFO", "Returning unrecognised response")
+            )
 
         self.telnet.read_until.assert_has_calls([
                 call(b"\n", timeout=30),
@@ -110,8 +143,12 @@ class TestSolve(unittest.TestCase):
         self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
         self.ctfqa.setAnswerCallback(multiply)
         exception_message = "There is no more output to read."
-        with self.assertRaisesRegex(ConnectionError, exception_message):
-            self.ctfqa.solve()
+        with LogCapture() as log_capture:
+            with self.assertRaisesRegex(ConnectionError, exception_message):
+                self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "ERROR", exception_message)
+            )
 
 
     def test_solve_connection_closed_halfway(self):
@@ -127,8 +164,14 @@ class TestSolve(unittest.TestCase):
         self.ctfqa.setQuestionRegex("(\d*) \* (\d*)")
         self.ctfqa.setAnswerCallback(multiply)
         exception_message = "There is no more output to read."
-        with self.assertRaisesRegex(ConnectionError, exception_message):
-            self.ctfqa.solve()
+        with LogCapture() as log_capture:
+            with self.assertRaisesRegex(ConnectionError, exception_message):
+                self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "INFO", "Q: 3 * 8"),
+                (MODULE_NAME, "INFO", "A: 24"),
+                (MODULE_NAME, "ERROR", exception_message)
+            )
 
         self.telnet.read_until.assert_has_calls([
                 call(b"\n", timeout=30),
@@ -182,8 +225,14 @@ class TestSolve(unittest.TestCase):
         self.ctfqa.setAnswerCallback(concatenate)
 
         exception_message = "Tried to write to a closed connection."
-        with self.assertRaisesRegex(ConnectionError, exception_message):
-            self.ctfqa.solve()
+        with LogCapture() as log_capture:
+            with self.assertRaisesRegex(ConnectionError, exception_message):
+                self.ctfqa.solve()
+            log_capture.check(
+                (MODULE_NAME, "INFO", "Q: 'Concatenate' 'this string together'"),
+                (MODULE_NAME, "INFO", "A: Concatenate this string together"),
+                (MODULE_NAME, "ERROR", exception_message)
+            )
 
 
 if __name__ == '__main__':

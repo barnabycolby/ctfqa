@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from telnetlib import Telnet
+import inspect
+import logging
 import re
 
 from ctfqa import NotConfiguredError
@@ -34,6 +36,7 @@ class CTFQA:
         self.questionRegex = None
         self.answerCallback = None
         self.telnet = telnet
+        self.logger = logging.getLogger(__name__)
 
 
     def setQuestionRegex(self, regex):
@@ -52,6 +55,7 @@ class CTFQA:
         """
         self.questionRegex = re.compile(regex)
         self.setQuestionRegexCalled = True
+        self.logger.info("Set question regex to \"{}\"".format(regex))
 
 
     def setAnswerCallback(self, callback):
@@ -69,6 +73,10 @@ class CTFQA:
 
         self.answerCallback = callback
         self.setAnswerCallbackCalled = True
+        self.logger.info("Set answer callback to {}{}".format(
+                callback.__name__,
+                inspect.signature(callback))
+            )
 
 
     def solve(self):
@@ -83,10 +91,14 @@ class CTFQA:
         ConnectionError -- If the connection is closed by the server unexpectedly.
         """
         if not self.setQuestionRegexCalled:
-            raise NotConfiguredError("You need to call setQuestionRegex first.")
+            exception_message = "You need to call setQuestionRegex first."
+            self.logger.error(exception_message)
+            raise NotConfiguredError(exception_message)
 
         if not self.setAnswerCallbackCalled:
-            raise NotConfiguredError("You need to call setAnswerCallback first.")
+            exception_message = "You need to call setAnswerCallback first."
+            self.logger.error(exception_message)
+            raise NotConfiguredError(exception_message)
 
         connectionOpen = True
         lastResponse = None
@@ -94,7 +106,9 @@ class CTFQA:
             try:
                 question_bytes = self.telnet.read_until(b"\n", timeout=30)
             except EOFError:
-                raise ConnectionError("There is no more output to read.")
+                exception_message = "There is no more output to read."
+                self.logger.error(exception_message)
+                raise ConnectionError(exception_message)
             question = str(question_bytes, "utf-8")
 
             matches = self.questionRegex.search(question)
@@ -103,10 +117,15 @@ class CTFQA:
                 connectionOpen = False
             else:
                 answer = self.answerCallback(*matches.groups())
+                self.logger.info("Q: {}".format(question.strip()))
+                self.logger.info("A: {}".format(answer.strip()))
                 try:
                     answer_with_newline = "{}\n".format(answer)
                     self.telnet.write(answer_with_newline.encode())
                 except OSError:
-                    raise ConnectionError("Tried to write to a closed connection.")
+                    exception_message = "Tried to write to a closed connection."
+                    self.logger.error(exception_message)
+                    raise ConnectionError(exception_message)
 
+        self.logger.info("Returning unrecognised response")
         return lastResponse
