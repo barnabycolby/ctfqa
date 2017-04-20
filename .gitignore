@@ -1,2 +1,6 @@
 # Ignore IDE files
 .idea
+
+# Ignore python generated files
+__pycache__
+*.pyc
