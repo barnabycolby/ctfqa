@@ -24,12 +24,13 @@ qa.setAnswerCallback(answerCallback)
 qa.solve()
 """
 class CTFQA:
-    def __init__(self, telnet):
+    def __init__(self, telnet, password=None):
         """Instantiate an instance of the CTFQA class.
 
         Arguments:
         telnet -- An instance of the telnetlib Telnet class that can be used to
                   communicate with the question and answer server.
+        password -- The password, if required by the telnet server.
         """
         self.setQuestionRegexCalled = False
         self.setAnswerCallbackCalled = False
@@ -37,6 +38,7 @@ class CTFQA:
         self.answerCallback = None
         self.telnet = telnet
         self.logger = logging.getLogger(__name__)
+        self.password = password
 
 
     def setQuestionRegex(self, regex):
@@ -99,6 +101,10 @@ class CTFQA:
             exception_message = "You need to call setAnswerCallback first."
             self.logger.error(exception_message)
             raise NotConfiguredError(exception_message)
+
+        if self.password is not None:
+            self.telnet.read_eager()
+            self.telnet.write("{}\n".format(self.password).encode())
 
         connectionOpen = True
         lastResponse = None

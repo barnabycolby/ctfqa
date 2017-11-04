@@ -25,3 +25,9 @@ The library logs it's conversation with the server. To see this output, simply a
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 ```
+
+## Passwords
+If the server requires a password, it can be supplied as an argument to the CTFQA constructor
+```python
+ctfqa = CTFQA(tn, "P@Ssw0rd")
+```
