@@ -13,7 +13,7 @@ def add(a, b):
 
 tn = Telnet("localhost", "1234")
 ctfqa = CTFQA(tn)
-ctfqa.setQuestionRegex("What is (\d*) \+ (\d*)\?")
+ctfqa.setQuestionRegex(b"What is (\d*) \+ (\d*)\?")
 ctfqa.setAnswerCallback(add)
 last_response = ctfqa.solve()
 ```

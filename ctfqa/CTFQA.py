@@ -110,14 +110,13 @@ class CTFQA:
         lastResponse = None
         while connectionOpen:
             try:
-                question_bytes = self.telnet.read_until(b"\n", timeout=30)
+                regex_index, matches, question_bytes = self.telnet.expect([self.questionRegex], timeout=30)
             except EOFError:
                 exception_message = "There is no more output to read."
                 self.logger.error(exception_message)
                 raise ConnectionError(exception_message)
             question = str(question_bytes, "utf-8")
 
-            matches = self.questionRegex.search(question)
             if matches is None:
                 lastResponse = question
                 connectionOpen = False
